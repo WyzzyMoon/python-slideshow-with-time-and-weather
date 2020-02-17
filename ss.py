@@ -56,6 +56,7 @@ def addtolist(file, extensions=['.png', '.jpg', '.jpeg', '.gif', '.bmp']):
     if e in extensions:
         print 'Adding to list: ', file
         file_list.append(file)
+        file_list.sort()
     else:
         print 'Skipping: ', file, ' (NOT a supported image)'
 
@@ -73,13 +74,13 @@ def timeSince(lastTime,interval):
         return True
     else:
         return False
-    
-    
+
+
 def main(startdir="."):
     global file_list, title, waittime
     lastSwitch=time.time()
     lastWeather=time.time()
-    
+
     owm = pyowm.OWM('4cc9ae1d116c7e70c145252ab605f260')
     observation = owm.weather_at_place('Ottawa,CA')
     w = observation.get_weather()
@@ -109,16 +110,16 @@ def main(startdir="."):
     pygame.display.set_caption(title)
     #pygame.display.toggle_fullscreen()
     pygame.display.set_mode(max(modes),pygame.FULLSCREEN)
-    
+
     pygame.mouse.set_visible(0)
-    
+
     #create font
     timeFont = pygame.font.Font("indulta/Indulta-SemiSerif-boldFFP.otf", 100)
     dateFont = pygame.font.Font("indulta/Indulta-SemiSerif-boldFFP.otf", 60)
     weatherFont = pygame.font.Font("indulta/Indulta-SemiSerif-boldFFP.otf", 60)
-    
+
     print str(waittime) +"wait time"
-    
+
 
     current = 0
     num_files = len(file_list)
@@ -128,12 +129,14 @@ def main(startdir="."):
             img = img.convert()
             tempX,tempY=img.get_size()
             ratio =tempX/tempY
+            center = (screen_height-(screen_width/ratio))/2
+            margin = 10
             tempSize=(screen_width,int(screen_width/ratio))
             print str(img.get_size())+" to "+ str(tempSize) +"and ratio: "+str(ratio)
             # rescale the image to fit the current display
             img = pygame.transform.scale(img, tempSize)
-            screen.blit(img, (0, 0))
-            
+            screen.blit(img, (0, center))
+
             #gets current weather
             if timeSince(lastWeather,30):
                 observation = owm.weather_at_place('Ottawa,CA')
@@ -143,26 +146,30 @@ def main(startdir="."):
                 print status
                 lastWeather=time.time()
                 print "updateing weather"
-            
+
             #gets the current time and displays it
+            #EU FORMATING:
+            #timeText=datetime.datetime.now().strftime("%H:%M")
+            #dateText=datetime.datetime.now().strftime("%d %B, %Y")
+            #US FORMATING:            
             timeText=datetime.datetime.now().strftime("%I:%M%p")
             dateText=datetime.datetime.now().strftime("%B %d, %Y")
             weatherText=str(int(temperature))+"`C  "+status
-            
-            
+
+
             timeLabel = timeFont.render(timeText, 1, (255,255,255))
             dateLabel = dateFont.render(dateText, 1, (255,255,255))
             weatherLabel = weatherFont.render(weatherText, 1, (255,255,255))
-            
+
             timeWidth, timeHeight= timeLabel.get_size()
             dateWidth, dateHeight= dateLabel.get_size()
             weatherWidth, weatherHeight= weatherLabel.get_size()
-            
+
             screen.blit(weatherLabel, (0, screen_height-weatherHeight))
-            
-            screen.blit(timeLabel, (screen_width-timeWidth, screen_height-timeHeight-dateHeight))
-            screen.blit(dateLabel, (screen_width-dateWidth, screen_height-dateHeight))
-            
+
+            screen.blit(timeLabel, (screen_width-timeWidth, screen_height-timeHeight-dateHeight-center-margin))
+            screen.blit(dateLabel, (screen_width-dateWidth, screen_height-dateHeight-center-margin))
+
             pygame.display.flip()
 
             input(pygame.event.get())
@@ -209,6 +216,6 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
     #waittime = args.waittime
-    
+
     title = args.title
     main(startdir=args.path)
